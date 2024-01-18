@@ -1,0 +1,135 @@
+; multi-segment executable file template.
+
+data segment
+    ; add your data here!
+    pkey db "press any key...$"
+    
+ends
+
+stack segment
+    dw   128  dup(0)
+ends
+
+code segment
+start:             
+    data8251 equ 0FFFAh
+    cmd8251 equ 0FFFBh
+    PA equ 0FFFCh
+    PB equ 0FFFDh
+    PC equ 0FFFEh
+    cmd8255 equ FFFFh 
+; set segment registers:
+    mov ax, data
+    mov ds, ax
+    mov es, ax   
+    
+    
+    ;initializing the 8251
+    mov al,8Fh
+    out cmd8251,al
+    mov cx,12
+    d0:loop d0
+    
+    mov al,40h
+    out cmd8251,al
+    mov cx,12
+    d1:loop d1 
+    
+    mov al,0FAh
+    out cmd8251,al ; send the mode
+    mov cx,12
+    d2:loop d2 
+    
+    mov al, 37h
+    out cmd8251,al ; send the command
+    mov cx,12
+    d3:loop d3
+    
+    
+    
+    
+    
+    ;initializing the 8255
+    mov al, 90h
+    out cmd8255,al ; send command byte A to the command register to apply the roles to the ports
+    mov cx,12
+    d4: loop d4
+    
+    
+               
+               
+               
+               
+    
+    
+    ;initializing the LCD display
+    mov al,00h
+    out cmd8255,al      ; let pc0 = 0 to make rs = 0 in lcd so we can send commands to it
+    mov cx,589
+    d5:loop d5
+    ;delay 
+    
+    ;clearing the display
+    mov al,01h
+    out PB,al 
+    mov cx,589
+    d6:loop d6
+    ;delay 2ms  
+    
+    ;returning home
+    mov al,02h
+    out PB,al 
+    mov cx,12
+    d7:loop d7
+    ;delay 40us 
+    
+    ;display on/off control
+    mov al,0Fh
+    out PB,al 
+    mov cx,12
+    d8:loop d8 
+    ;delay 40us
+    
+    ;function set
+    mov al,34h
+    out PB,al 
+    mov cx,12
+    d9:loop d9 
+    ;delay 40us
+    
+    ;setting DDRAM (i.e. display data ram)
+    mov al,80h
+    out PB,al  
+    mov cx,12
+    d10:loop d10
+    ;delay 40us 
+    
+    ;setting CGRAM (i.e. character generator ram)
+    mov al,40h
+    out PB,al 
+    mov cx,12
+    d11:loop d11 
+    ;delay 40us 
+    
+    ;finally allowing to start sending data to display
+    ;by setting the register select rs = 1
+    mov al,01h
+    out cmd8255,al
+    mov cx,589
+    d12:loop d12
+    ;delay 
+    
+    
+    
+    
+    
+    
+    
+
+    
+    
+    mov ax, 4c00h ; exit to operating system.
+    int 21h    
+ends
+
+end start ; set entry point and stop the assembler.
